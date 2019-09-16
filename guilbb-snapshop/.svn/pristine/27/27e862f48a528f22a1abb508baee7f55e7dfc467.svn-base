@@ -1,0 +1,245 @@
+/*
+* TCSS 305 – Autumn 2018
+* Assignment 4 – Snapshop
+*/
+
+package gui;
+
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.IOException;
+import java.util.Map;
+import java.util.TreeMap;
+
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+
+import filters.EdgeDetectFilter;
+import filters.EdgeHighlightFilter;
+import filters.Filter;
+import filters.FlipHorizontalFilter;
+import filters.FlipVerticalFilter;
+import filters.GrayscaleFilter;
+import filters.SharpenFilter;
+import filters.SoftenFilter;
+import image.PixelImage;
+import javafx.css.Size;
+
+/**
+ * This class handles the GUI for an image manipulation program.
+ * It allows you to upload an image, manipulate it, and save the results.
+ * 
+ * @author Brittany Guilbert
+ * @version 5 November 2018
+ *
+ */
+public class SnapShopGUI extends JFrame {
+    
+    /** A generated serial version UID for object Serialization. */
+    private static final long serialVersionUID = -7617043161437884270L;
+    
+    /** A button to open an image. */
+    private JButton myButtonOpen;
+    
+    /** A button to save the manipulated image. */
+    private JButton myButtonSaveAs;
+    
+    /** A button to close an image. */
+    private JButton myButtonCloseImage;
+    
+    /** A panel to organize buttons, to be placed across the top of the window. */
+    private final JPanel myTopPanel;
+    
+    /** A panel to organize buttons, to be placed in the center of the window. */
+    private final JPanel myCenterPanel;
+    
+    /** A panel to organize buttons, to be placed across the bottom of the window. */
+    private final JPanel myBottomPanel;
+    
+    /** A label display the image. */
+    private JLabel myImageDisplayLabel;
+    
+    /** The image to be displayed. */
+    private PixelImage myDisplayImage;
+    
+    private PixelImage myOriginalDisplayImage;
+    
+    private Map<String,Filter> filterAndName;
+    
+    private JFileChooser myFileChooser;
+        
+    /** A size for the JFrame. */
+    private static final Dimension FRAME_SIZE = new Dimension(250, 630);
+    
+    public SnapShopGUI() {
+        super("TCSS 305 – Assignment 4");
+        
+        myButtonOpen = new JButton("Open...");
+        myButtonSaveAs = new JButton("Save As...");
+        myButtonCloseImage = new JButton("Close Image");
+        myTopPanel = new JPanel();
+        myCenterPanel = new JPanel();
+        myBottomPanel = new JPanel();
+        myFileChooser = new JFileChooser();
+        myImageDisplayLabel = new JLabel();
+        filterAndName = new TreeMap<String,Filter>();
+        
+    }
+    
+    /**
+     * Displays a simple JFrame.
+     */
+    public void start() {
+        
+        // Don't forget to set the close operation!
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        /*
+         * Attempt to center the frame on the screen.
+         * There are better ways to do this which be demonstrated soon.
+         */
+        setLocationRelativeTo(null);
+        
+        
+        fillMapWithFilterAndName(new EdgeDetectFilter(), new EdgeHighlightFilter(), 
+                                 new FlipHorizontalFilter(), new FlipVerticalFilter(),
+                                 new GrayscaleFilter(), new SharpenFilter(),
+                                 new SoftenFilter()
+                                 );
+        
+        addButtons();      
+        pack();
+        setMinimumSize(getSize());
+        setVisible(true);
+    }
+    
+    private void fillMapWithFilterAndName(Filter...theFiltersToAdd) {
+        
+        for(Filter theFilterToAdd: theFiltersToAdd ) {
+            filterAndName.put(theFilterToAdd.getDescription(), theFilterToAdd);
+        }
+    }
+    
+    private void addButtons() {
+        
+        filterAndName.forEach((k,v) -> {
+            JButton button = new JButton(k);
+            myTopPanel.add(button);
+            button.addActionListener(new FilterListener());
+        });
+        
+        disableButtons();
+       
+        ActionListener openListener = new OpenListener();
+        myButtonOpen.addActionListener(openListener);
+        
+        ActionListener saveAsListener = new SaveAsListener();
+        myButtonSaveAs.addActionListener(saveAsListener);
+        
+        ActionListener closeImageListener = new CloseImageListener();
+        myButtonCloseImage.addActionListener(closeImageListener);
+        
+        myBottomPanel.add(myButtonOpen);
+        myBottomPanel.add(myButtonSaveAs);
+        myBottomPanel.add(myButtonCloseImage);
+        
+        add(myTopPanel, BorderLayout.NORTH);
+        add(myBottomPanel, BorderLayout.SOUTH);
+  
+    }
+    
+    private void enableButtons() {
+        
+        Component[] buttons = myTopPanel.getComponents();
+        for(Component button : buttons) {
+            button.setEnabled(true);
+        }
+        
+        myButtonSaveAs.setEnabled(true);
+        myButtonCloseImage.setEnabled(true);
+    }
+    
+    private void disableButtons() {
+        Component[] buttons = myTopPanel.getComponents();
+        for(Component button : buttons) {
+            button.setEnabled(false);
+        }
+        
+        myButtonSaveAs.setEnabled(false);
+        myButtonCloseImage.setEnabled(false);
+    }
+    
+    final class OpenListener implements ActionListener {
+        public void actionPerformed(final ActionEvent theEvent) {
+            
+            if (myFileChooser.showOpenDialog(myButtonOpen) == JFileChooser.APPROVE_OPTION) {
+                try {
+                    File imageFile = myFileChooser.getSelectedFile();
+                    PixelImage image;
+                    image = PixelImage.load(imageFile);
+                    myDisplayImage = image;
+                    myOriginalDisplayImage = image;
+                    myImageDisplayLabel.setIcon(new ImageIcon(image));
+                    myCenterPanel.add(myImageDisplayLabel);
+                    add(myCenterPanel, BorderLayout.CENTER);
+                    enableButtons();
+                    setMinimumSize(null);
+                    pack();
+                    setMinimumSize(getSize());  
+            }
+                catch (IOException e) {
+                    javax.swing.JOptionPane.showMessageDialog(null, 
+                                             "The selected file did not contain an image!",
+                                             "Error!", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+            myFileChooser.setCurrentDirectory(myFileChooser.getCurrentDirectory());   
+        }
+    }
+    
+    final class SaveAsListener implements ActionListener {
+        public void actionPerformed(final ActionEvent theEvent) {
+            
+            if (myFileChooser.showSaveDialog(myButtonSaveAs) == JFileChooser.APPROVE_OPTION) {
+                try {
+                    myDisplayImage.save(myFileChooser.getSelectedFile());
+            }
+                catch (IOException e) {
+                    javax.swing.JOptionPane.showMessageDialog(null, "File cannot be written!", 
+                                                              "Error!", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+            myFileChooser.setCurrentDirectory(myFileChooser.getCurrentDirectory());  
+        }
+    }
+    
+    final class FilterListener implements ActionListener {
+        public void actionPerformed(final ActionEvent theEvent) {
+            Filter toApply = filterAndName.get(theEvent.getActionCommand());
+            toApply.filter(myDisplayImage);
+            myImageDisplayLabel.setIcon(new ImageIcon(myDisplayImage));   
+        }
+    }
+    
+    private final class CloseImageListener implements ActionListener {
+        public void actionPerformed(final ActionEvent theEvent) {
+            
+            remove(myCenterPanel);
+            Component[] buttons = myTopPanel.getComponents();
+            disableButtons();
+            setMinimumSize(null);
+            repaint();
+            pack();
+            setMinimumSize(getSize());    
+        }
+    }   
+}

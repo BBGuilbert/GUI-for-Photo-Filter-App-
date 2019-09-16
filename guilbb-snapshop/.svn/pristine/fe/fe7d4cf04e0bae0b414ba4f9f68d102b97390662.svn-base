@@ -1,0 +1,336 @@
+/*
+* TCSS 305 – Autumn 2018
+* Assignment 4 – Snapshop
+*/
+
+package gui;
+import filters.EdgeDetectFilter;
+import filters.EdgeHighlightFilter;
+import filters.Filter;
+import filters.FlipHorizontalFilter;
+import filters.FlipVerticalFilter;
+import filters.GrayscaleFilter;
+import filters.SharpenFilter;
+import filters.SoftenFilter;
+import image.PixelImage;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.IOException;
+import java.util.Map;
+import java.util.TreeMap;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+
+/**
+ * This class handles the GUI for an image manipulation program.
+ * It allows you to upload an image, manipulate it, and save the results.
+ * 
+ * @author Brittany Guilbert
+ * @version 5 November 2018
+ *
+ */
+public class SnapShopGUI extends JFrame {
+    
+    /** A generated serial version UID for object Serialization. */
+    private static final long serialVersionUID = -7617043161437884270L;
+    
+    /** A button to open an image. */
+    private JButton myButtonOpen;
+    
+    /** A button to save the manipulated image. */
+    private JButton myButtonSaveAs;
+    
+    /** A button to close an image. */
+    private JButton myButtonCloseImage;
+    
+    /** A panel to organize buttons, to be placed across the top of the window. */
+    private final JPanel myTopPanel;
+    
+    /** A panel to organize buttons, to be placed in the center of the window. */
+    private final JPanel myCenterPanel;
+    
+    /** A panel to organize buttons, to be placed across the bottom of the window. */
+    private final JPanel myBottomPanel;
+    
+    /** A label display the image. */
+    private JLabel myImageDisplayLabel;
+    
+    /** The image to be displayed. */
+    private PixelImage myDisplayImage;
+    
+    /** A map of the Filters to be used and their names. */
+    private Map<String, Filter> myFiltersAndNamesMap;
+    
+    /** An object that will allow the user to choose a file. */
+    private JFileChooser myFileChooser;
+        
+    /**
+     * A constructor to initialize fields.
+     */
+    public SnapShopGUI() {
+        super("TCSS 305 – Assignment 4");
+        
+        myButtonOpen = new JButton("Open...");
+        myButtonSaveAs = new JButton("Save As...");
+        myButtonCloseImage = new JButton("Close Image");
+        myTopPanel = new JPanel();
+        myCenterPanel = new JPanel();
+        myBottomPanel = new JPanel();
+        myFileChooser = new JFileChooser();
+        myImageDisplayLabel = new JLabel();
+        myFiltersAndNamesMap = new TreeMap<String, Filter>();    
+    }
+    
+    /**
+     * Creates and shows the GUI on the screen.
+     */
+    public void start() {
+        
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        setLocationRelativeTo(null);
+          
+        //add new filters here
+        fillMapWithFilterAndName(new EdgeDetectFilter(), new EdgeHighlightFilter(), 
+                                 new FlipHorizontalFilter(), new FlipVerticalFilter(),
+                                 new GrayscaleFilter(), new SharpenFilter(),
+                                 new SoftenFilter()
+                                 );
+        
+        addButtonsAndListeners();      
+        setVisible(true);
+    }
+    
+    /**
+     * This method accepts all the Filters to be used in this program and adds them to a Map.
+     * 
+     * Any modification to the Filters used in this program should be done 
+     * by changing the parameters passed to this method.
+     * 
+     * This method adds the filters along with their names to myFiltersAndNamesMap.
+     * 
+     * @param theFiltersToAdd   All of the Filters to be used in this program
+     */
+    private void fillMapWithFilterAndName(final Filter...theFiltersToAdd) {
+        
+        for (Filter filterToAdd: theFiltersToAdd) {
+            myFiltersAndNamesMap.put(filterToAdd.getDescription(), filterToAdd);
+        }
+    }
+    
+    /**
+     * Adds ActionListeners to the buttons, and then adds the buttons to the JFrame.
+     * Also does some button formatting, by adding buttons to panels first.
+     */
+    private void addButtonsAndListeners() {
+        
+        myFiltersAndNamesMap.forEach((k, v) -> {
+            final JButton button = new JButton(k);
+            myTopPanel.add(button);
+            button.addActionListener(new FilterListener());
+        });
+        
+        disableButtons();
+       
+        final ActionListener openListener = new OpenListener();
+        myButtonOpen.addActionListener(openListener);
+        
+        final ActionListener saveAsListener = new SaveAsListener();
+        myButtonSaveAs.addActionListener(saveAsListener);
+        
+        final ActionListener closeImageListener = new CloseImageListener();
+        myButtonCloseImage.addActionListener(closeImageListener);
+        
+        myBottomPanel.add(myButtonOpen);
+        myBottomPanel.add(myButtonSaveAs);
+        myBottomPanel.add(myButtonCloseImage);
+        
+        add(myTopPanel, BorderLayout.NORTH);
+        add(myBottomPanel, BorderLayout.SOUTH);
+        
+        formatWindowToSize();
+    }
+    
+    /**
+     * This method resizes the window when the contents change.
+     */
+    private void formatWindowToSize() {
+        setMinimumSize(null);
+        pack();
+        final Dimension border = new Dimension();
+        final int widthBorder = 200;
+        final int heightBorder = 20;
+        border.setSize(widthBorder + getSize().getWidth(), 
+                                         heightBorder + getSize().getHeight());
+        setMinimumSize(border);
+    }
+    
+    /**
+     * Enables all the necessary buttons.
+     * That is every button except for openButton, which should already be enabled.
+     */
+    private void enableButtons() {
+        
+        final Component[] buttons = myTopPanel.getComponents();
+        for (Component button : buttons) {
+            button.setEnabled(true);
+        }
+        
+        myButtonSaveAs.setEnabled(true);
+        myButtonCloseImage.setEnabled(true);
+    }
+    
+    /**
+     * Disables all the necessary buttons.
+     * That is every button except for openButton, which should not be disabled.
+     */
+    private void disableButtons() {
+        final Component[] buttons = myTopPanel.getComponents();
+        for (Component button : buttons) {
+            button.setEnabled(false);
+        }
+        
+        myButtonSaveAs.setEnabled(false);
+        myButtonCloseImage.setEnabled(false);
+    }
+    
+    /**
+     * If the button this is attached to is clicked, it will open a FileChooser dialog.
+     * If the user chooses an image, this class will display that image and reformat the GUI.
+     * 
+     * @author Brittany Guilbert
+     * @version 5 November 2018
+     *
+     */
+    final class OpenListener implements ActionListener {
+        
+        /**
+         * Detects a button clicked event and opens a FileChooser open dialog.
+         * If the user chooses an image, this will display that image and reformat the GUI.
+         * @param theEvent the event, hopefully the openButton button was clicked 
+         */
+        @Override
+        public void actionPerformed(final ActionEvent theEvent) {
+            
+            if (myFileChooser.showOpenDialog(myButtonOpen) == JFileChooser.APPROVE_OPTION) {
+                try {
+                    final File imageFile = myFileChooser.getSelectedFile();
+                    
+                    final PixelImage image = PixelImage.load(imageFile);
+                    myDisplayImage = image;
+                    
+                    myImageDisplayLabel.setIcon(new ImageIcon(image));
+                    myCenterPanel.add(myImageDisplayLabel);
+                    add(myCenterPanel, BorderLayout.CENTER);
+
+                    formatWindowToSize();
+                    
+//                    setMinimumSize(null);
+//                    pack();
+//                    setMinimumSize(getSize());
+                    
+                    enableButtons();  
+                    
+                } catch (final IOException e) {
+                    javax.swing.JOptionPane.showMessageDialog(null, 
+                                             "The selected file did not contain an image!",
+                                             "Error!", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+            myFileChooser.setCurrentDirectory(myFileChooser.getCurrentDirectory());   
+        }
+    }
+    
+    /**
+     * If the button this is attached to is clicked, it will open a FileChooser save dialog.
+     * If the user chooses an appropriate file to save an image, 
+     * this class will save the displayImage to that file.
+     * 
+     * @author Brittany Guilbert
+     * @version 5 November 2018
+     *
+     */
+    final class SaveAsListener implements ActionListener {
+        /**
+         * Detects a button clicked event and opens a FileChooser save dialog.
+         * If the user chooses an appropriate file to save an image, 
+         * this class will save the displayImage to that file.
+         * @param theEvent the event, hopefully the saveAsButton button was clicked 
+         */
+        @Override
+        public void actionPerformed(final ActionEvent theEvent) {
+            
+            if (myFileChooser.showSaveDialog(myButtonSaveAs) == JFileChooser.APPROVE_OPTION) {
+                try {
+                    myDisplayImage.save(myFileChooser.getSelectedFile());
+                } catch (final IOException e) {
+                    javax.swing.JOptionPane.showMessageDialog(null, "File cannot be written!", 
+                                                              "Not Saved!", 
+                                                              JOptionPane.ERROR_MESSAGE);
+                }
+            }
+            myFileChooser.setCurrentDirectory(myFileChooser.getCurrentDirectory());  
+        }
+    }
+    
+    /**
+     * If the button this class is attached to is clicked, 
+     * it will apply a Filter to the display image.
+     * The filter applied depends on the button clicked. 
+     * 
+     * @author Brittany Guilbert
+     * @version 5 November 2018
+     *
+     */
+    final class FilterListener implements ActionListener {
+        /**
+         * Detects a button clicked event and applies a Filter.
+         * 
+         * @param theEvent the event, hopefully a Filter button was clicked 
+         */
+        @Override
+        public void actionPerformed(final ActionEvent theEvent) {
+            final Filter toApply = myFiltersAndNamesMap.get(theEvent.getActionCommand());
+            toApply.filter(myDisplayImage);
+            myImageDisplayLabel.setIcon(new ImageIcon(myDisplayImage));   
+        }
+    }
+    
+    /**
+     * If the button this class is attached to is clicked, 
+     * it will stop displaying an image to the user.
+     * It will also disable all buttons but the openButton button, and reformat the GUI. 
+     * 
+     * @author Brittany Guilbert
+     * @version 5 November 2018
+     *
+     */
+    private final class CloseImageListener implements ActionListener {
+        /**
+         * Detects a button clicked event and stops displaying an image to the user.
+         * 
+         * @param theEvent the event, hopefully the closeImageButton button was clicked 
+         */
+        @Override
+        public void actionPerformed(final ActionEvent theEvent) {
+            
+            remove(myCenterPanel);
+            disableButtons();
+            //setMinimumSize(null);
+            repaint();
+            //pack();
+            //setMinimumSize(getSize()); 
+            
+            formatWindowToSize();
+        }
+    }   
+}

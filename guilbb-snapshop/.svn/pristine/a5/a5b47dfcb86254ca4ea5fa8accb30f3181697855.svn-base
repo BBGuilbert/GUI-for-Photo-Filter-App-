@@ -1,0 +1,110 @@
+// finish (and comment) me!
+
+package gui;
+
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+import javax.swing.JButton;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+
+/**
+ * 
+ * @author ???
+ * @version ???
+ */
+public class SnapShopGUI extends JFrame {
+    
+    // Add Buttons
+    JButton buttonEdgeDetect = new JButton("Edge Detect");
+    JButton buttonEdgeHighlight = new JButton("Edge Highlight");
+    JButton buttonFlipHorizontal = new JButton("Flip Horizontal");
+    JButton buttonFlipVertical = new JButton("Flip Vertical");
+    JButton buttonGrayscale = new JButton("Grayscale");
+    JButton buttonSharpen = new JButton("Sharpen");
+    JButton buttonSoften = new JButton("Soften");
+    JButton buttonOpen = new JButton("Open...");
+    JButton buttonSaveAs = new JButton("Save As...");
+    JButton buttonCloseImage = new JButton("Close Image");
+    
+    final JPanel topPanel = new JPanel();
+    final JPanel bottomPanel = new JPanel();
+        
+        
+    /** A size for the JFrame. */
+    private static final Dimension FRAME_SIZE = new Dimension(250, 630);
+    
+    /**
+     * Displays a simple JFrame.
+     */
+    public void start() {
+        
+        javax.swing.JOptionPane.showMessageDialog(null, "SnapShop placeholder");
+        
+        // Don't forget to set the close operation!
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        // The default JFrame size is VERY small, so set it to something reasonable
+        //setSize(FRAME_SIZE);
+
+
+        /*
+         * Attempt to center the frame on the screen.
+         * There are better ways to do this which be demonstrated soon.
+         */
+        setLocationRelativeTo(null);
+        
+        
+        addButtons();
+        
+        JFileChooser fileChooser = new JFileChooser();
+        
+         final class OpenListener implements ActionListener {
+            public void actionPerformed(final ActionEvent theEvent) {
+                fileChooser.showOpenDialog(buttonOpen);
+            }
+        }
+         
+         ActionListener openListener = new OpenListener();
+         buttonOpen.addActionListener(openListener);
+
+
+        // pack() resizes the Frame to fit the contents of the frame
+        // using this will ignore the size we set previously
+        
+        pack();
+
+        setVisible(true);
+    }
+    
+    private void addButtons() {
+        buttonEdgeDetect.setEnabled(false);
+        buttonEdgeHighlight.setEnabled(false);
+        buttonFlipHorizontal.setEnabled(false);
+        buttonFlipVertical.setEnabled(false);
+        buttonGrayscale.setEnabled(false);
+        buttonSharpen.setEnabled(false);
+        buttonSoften.setEnabled(false);
+        buttonSaveAs.setEnabled(false);
+        buttonCloseImage.setEnabled(false);
+        
+        topPanel.add(buttonEdgeDetect);
+        topPanel.add(buttonEdgeHighlight);
+        topPanel.add(buttonFlipHorizontal);
+        topPanel.add(buttonFlipVertical);
+        topPanel.add(buttonGrayscale);
+        topPanel.add(buttonSharpen);
+        topPanel.add(buttonSoften);
+        bottomPanel.add(buttonOpen);
+        bottomPanel.add(buttonSaveAs);
+        bottomPanel.add(buttonCloseImage);
+        
+        add(topPanel, BorderLayout.NORTH);
+        add(bottomPanel, BorderLayout.SOUTH);
+    }
+    
+}
